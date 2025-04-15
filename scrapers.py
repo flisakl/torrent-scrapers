@@ -49,7 +49,7 @@ class SearchParams:
     order_ascending: bool = False
 
 
-class Scrapper:
+class Scraper:
     """
     Base class for torrent site scrapers.
 
@@ -262,7 +262,7 @@ class Scrapper:
         pass
 
 
-class Scrapper1337(Scrapper):
+class Scraper1337(Scraper):
     """
     A scraper implementation for 1337x.to.
     """

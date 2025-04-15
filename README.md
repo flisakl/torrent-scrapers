@@ -1,8 +1,8 @@
 # Torrent Scraper Collection
 
-Collection of web scrappers of popular torrent sites.
+Collection of web scrapers of popular torrent sites.
 
-Currently package provides scrappers for:
+Currently package provides scrapers for:
 - [X] [1337x](https://1337x.to)
 - [ ] [The Pirate Bay](https://thepiratebay.org/index.html)
 
@@ -24,7 +24,7 @@ You can install the package from pypi or clone the repository.
 ### Package
 
 ```bash
-pip install torrent-scrappers
+pip install torrent-scrapers
 ```
 
 ### Manual installation
@@ -38,8 +38,8 @@ pip install torrent-scrappers
 #### Clone repository
 
 ```bash
-git clone https://github.com/flisakl/torrent-scrappers
-cd torrent-scrappers
+git clone https://github.com/flisakl/torrent-scrapers
+cd torrent-scrapers
 ```
 
 #### Install dependencies
@@ -50,9 +50,9 @@ pip install requests beautifulsoup4
 
 ## 🛠 Usage
 
-### Using built in scrapper
+### Using built in scraper
 ```python
-from scrappers import Scrapper1337, SearchParams
+from scrapers import Scrapper1337, SearchParams
 
 scraper = Scrapper1337()
 
@@ -70,7 +70,7 @@ for torrent in results:
 
 ```
 
-### 🧩 Making your own scrapper
+### 🧩 Making your own scraper
 
 To add support for a new torrent site:
 
