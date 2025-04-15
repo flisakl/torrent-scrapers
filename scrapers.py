@@ -6,6 +6,8 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+magnet_regex = re.compile(r'^magnet')
+
 
 @dataclass
 class TorrentInfo:
@@ -362,7 +364,86 @@ class Scraper1337(Scraper):
         magnet_links = self.find_all(
             body,
             'a',
-            href=re.compile(r'^magnet')
+            href=magnet_regex
         )
         if magnet_links:
             torrent.magnet = magnet_links[0].attrs['href']
+
+
+class ScraperNya(Scraper):
+    def __init__(self):
+        super().__init__(
+            'Nyaa.si',
+            'https://nyaa.si',
+            ['anime', 'audio', 'literature', 'live action', 'pictures', 'software'],
+            ['size', 'date', 'seeders', 'leechers', 'leechers', 'downloads']
+        )
+
+    def get_request_data(self, page: int, params: SearchParams):
+        payload = {
+            "p": page,
+            "q": params.name
+        }
+        cat = params.category
+        if cat and cat in self.categories:
+            payload["c"] = f"{self.categories.index(cat) + 1}_0"
+
+        oc = params.order_column
+
+        if oc and oc in self.ordering_columns:
+            payload["s"] = oc
+            payload["o"] = "asc" if params.order_ascending else "desc"
+
+        return f"{self.base}/", payload
+
+    def parse_response(self, response) -> list[TorrentInfo]:
+        """
+        Parses the Nyaa.si search results page and extracts torrent info.
+
+        Returns:
+            A list of TorrentInfo objects.
+        """
+        soup = BeautifulSoup(response.text, 'html.parser')
+        results = []
+        body = soup.body
+        table_body = self.find_element(body, "tbody", recursive=True)
+        if table_body:
+            rows = self.find_all(table_body, "tr", recursive=False)
+            for row in rows:
+                data = self._parse_row(row)
+                if data:
+                    results.append(data)
+
+        return results
+
+    def _parse_row(self, row) -> TorrentInfo | None:
+        """
+        Parses a table row and returns a TorrentInfo object if successful.
+
+        Args:
+            row: A <tr> tag containing torrent data.
+
+        Returns:
+            TorrentInfo or None.
+        """
+        data = {}
+        row_data = self.find_all(row, "td", recursive=False)
+        if row_data:
+            category, name, links, size, _, se, le, _ = row_data
+            data['category'] = self.find_element(
+                category, 'a', recursive=False).attrs['title']
+            name = self.find_all(name, 'a', recursive=False)
+            if len(name) == 2:
+                name = name[1]
+            else:
+                name = name[0]
+            data['name'] = name.attrs['title']
+            data['url'] = self.get_torrent_url(name.attrs['href'])
+            data['size'] = size.get_text()
+            data['seeders'] = int(se.get_text().strip())
+            data['leechers'] = int(le.get_text().strip())
+            data['magnet'] = self.find_element(
+                links, 'a', href=magnet_regex).attrs['href']
+
+            return TorrentInfo(**data)
+        return None

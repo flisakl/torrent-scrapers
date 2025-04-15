@@ -4,7 +4,7 @@ Collection of web scrapers of popular torrent sites.
 
 Currently package provides scrapers for:
 - [X] [1337x](https://1337x.to)
-- [ ] [The Pirate Bay](https://thepiratebay.org/index.html)
+- [X] [Nyaa](https://nyaa.si)
 
 ---
 
