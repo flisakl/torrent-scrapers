@@ -85,6 +85,7 @@ class Scraper:
         self,
         params: SearchParams,
         pages: tuple[int] = (1,),
+        extra_params: dict = {}
     ) -> list[TorrentInfo]:
         """
         Searches for torrents across the specified pages.
@@ -92,6 +93,7 @@ class Scraper:
         Args:
             params: SearchParams instance containing query filters.
             pages: Tuple of page numbers to scrape.
+            extra_params: Optional scraper specific parameters for filtering.
 
         Returns:
             A list of TorrentInfo objects.
@@ -100,7 +102,9 @@ class Scraper:
         results = []
 
         for page_number in pages:
-            page_results = self.get_page_results(page_number, params)
+            page_results = self.get_page_results(
+                page_number, params, extra_params
+            )
             results.extend(page_results)
 
         logger.info(f"{self.lp} Finished")
@@ -122,6 +126,7 @@ class Scraper:
         self,
         page_number: int,
         params: SearchParams,
+        extra_params: dict = None
     ) -> list[TorrentInfo]:
         """
         Fetches and parses a single page of torrent results.
@@ -129,12 +134,13 @@ class Scraper:
         Args:
             page_number: The page number to fetch.
             params: Search parameters.
+            extra_params: Optional scraper specific parameters for filtering.
 
         Returns:
             A list of TorrentInfo objects parsed from the page.
         """
         logger.info(f"{self.lp} Fetching page {page_number}")
-        url, payload = self.get_request_data(page_number, params)
+        url, payload = self.get_request_data(page_number, params, extra_params)
         results = []
 
         try:
@@ -153,12 +159,18 @@ class Scraper:
     def get_request_data(
         self,
         page_number: int,
-        params: SearchParams
+        params: SearchParams,
+        extra_params: dict = None
     ) -> tuple[str, dict]:
         """
         Returns the URL and payload parameters for the HTTP GET request.
 
         This method should be overridden for site-specific parameters.
+
+        Args:
+            page_number: The page number to fetch.
+            params: SearchParams instance containing query filters.
+            extra_params: Optional scraper specific parameters for filtering.
 
         Returns:
             A tuple of (URL, payload dict).
@@ -277,7 +289,12 @@ class Scraper1337(Scraper):
             ['time', 'size', 'seeders', 'leechers']
         )
 
-    def get_request_data(self, page_number: int, params: SearchParams):
+    def get_request_data(
+        self,
+        page_number: int,
+        params: SearchParams,
+        extra=None
+    ):
         """
         Constructs the request URL and parameters based on search params.
 
@@ -379,7 +396,7 @@ class ScraperNya(Scraper):
             ['size', 'date', 'seeders', 'leechers', 'leechers', 'downloads']
         )
 
-    def get_request_data(self, page: int, params: SearchParams):
+    def get_request_data(self, page: int, params: SearchParams, extra = None):
         payload = {
             "p": page,
             "q": params.name
