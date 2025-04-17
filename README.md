@@ -45,29 +45,29 @@ cd torrent-scrapers
 #### Install dependencies
 
 ```bash
-pip install requests beautifulsoup4
+pip install requests beautifulsoup4 pydantic
 ```
 
 ## 🛠 Usage
 
 ### Using built in scraper
 ```python
-from scrapers import Scrapper1337, SearchParams
+from scrapers.x1337 import Scraper1337, Params1337, Category1337, Order1337
 
-scraper = Scrapper1337()
+scraper = Scraper1337()
 
-params = SearchParams(
-    name="ubuntu",
-    order_column="seeders",
+params = Params1337(
+    name="ozark",
+    category=Category1337.TV,
+    order_column=Order1337.SIZE,
     order_ascending=False
 )
 
-results = scraper.find_torrents(params, pages=(1, 2))
-scraper.get_magnet_links(results)
+results = scraper.find_torrents(params, (1,))
 
 for torrent in results:
-    print(torrent.name, torrent.magnet)
-
+    scraper.get_torrent_info(torrent)
+    print(torrent)
 ```
 
 ### 🧩 Making your own scraper
@@ -77,16 +77,15 @@ To add support for a new torrent site:
 1. Subclass Scrapper
 1. Implement the following methods:
     - get_request_data
-    - parse_response
-    - fetch_magnet_link - implement when magnet link can not be obtained on site's
-    search page
+    - parse_search_page
+    - parse_detail_page
 
 
 ### 🔧 Structures
 
 #### TorrentInfo
 
-Dataclass containing torrent informations
+Pydantic's model containing torrent informations.
 
 | **Field** | **Type** | **Description**                   |
 |-----------|----------|-----------------------------------|
@@ -95,18 +94,18 @@ Dataclass containing torrent informations
 | seeders   | int      | Number of seeders                 |
 | leechers  | int      | Number of leechers                |
 | size      | str      | Size of torrent's data            |
-| uploader  | str      | Optional name of torrent uploader |
 | magnet    | str      | Magnet link                       |
+| uploader  | str      | Optional name of torrent uploader |
+| category  | str      | Optional category of the torrent  |
 
 #### SearchParams
 
-Immutable dataclass for filters
+Pydantic's model containing search parameters, it is best to create subclass
+for each scraper.
 
-| **Field**       | **Type** | **Description**   |
-|-----------------|----------|-------------------|
-| name            | str      | Search term       |
-| category        | str      | Optional category |
-| order_column    | str      | Sorting column    |
-| order_ascending | bool     | Sort order        |
-
-If **order_column** is set to None, ordering will not be applied.
+| **Field**       | **Type** | **Description**            |
+|-----------------|----------|----------------------------|
+| name            | str      | Search term                |
+| category        | str      | Optional category          |
+| order_column    | str      | Optional sorting column    |
+| order_ascending | bool     | Sort order                 |

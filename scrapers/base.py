@@ -73,6 +73,10 @@ class Scraper:
         self.base = base_url
         self.lp = f"[{self.name}]"  # log prefix
         self.timeout = timeout
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0'
+        }
+        self.params = None
 
     def find_torrents(
         self,
@@ -94,15 +98,38 @@ class Scraper:
         logger.info(f"{self.lp} Started")
         results = []
 
+        self.params = params
         if timeout:
             self.timeout = timeout
 
         for page_number in pages:
-            page_results = self.get_page_results(page_number, params)
+            page_results = self.get_page_results(page_number)
             results.extend(page_results)
 
         logger.info(f"{self.lp} Finished")
         return results
+
+    def get_torrent_info(
+        self,
+        torrent: TorrentInfo
+    ) -> None:
+        """
+        Fetches information about single torrent.
+
+        Args:
+            torrent_url: URL of torrent detail page.
+        """
+        logger.info(f"{self.lp} Fetching torent info...")
+        try:
+            response = requests.get(torrent.url, headers=self.headers)
+            response.raise_for_status()
+            logger.info(f"{self.lp} Done")
+            return self.parse_detail_page(response, torrent)
+        except requests.Timeout:
+            logger.warning(f"{self.lp} Timeout for {torrent.url}")
+        except requests.ConnectionError:
+            logger.warning(f"{self.lp} Connection error for {torrent.url}")
+        return None
 
     def get_torrent_url(self, url):
         """
@@ -119,28 +146,25 @@ class Scraper:
     def get_page_results(
         self,
         page_number: int,
-        params: SearchParams,
     ) -> list[TorrentInfo]:
         """
         Fetches and parses a single page of torrent results.
 
         Args:
             page_number: The page number to fetch.
-            params: Search parameters.
 
         Returns:
             A list of TorrentInfo objects parsed from the page.
         """
         logger.info(f"{self.lp} Fetching page {page_number}")
-        url, payload = self.get_request_data(page_number, params)
+        url, payload = self.get_request_data(page_number)
         results = []
 
         try:
-            headers = self.get_request_headers(page_number, params)
-            response = requests.get(url, params=payload, headers=headers,
+            response = requests.get(url, params=payload, headers=self.headers,
                                     timeout=self.timeout)
             response.raise_for_status()
-            results = self.parse_response(response)
+            results = self.parse_search_page(response)
         except requests.Timeout:
             logger.warning(f"{self.lp} Timeout for {url}")
         except requests.ConnectionError:
@@ -151,7 +175,6 @@ class Scraper:
     def get_request_data(
         self,
         page_number: int,
-        params: SearchParams,
     ) -> tuple[str, dict]:
         """
         Returns the URL and payload parameters for the HTTP GET request.
@@ -160,30 +183,44 @@ class Scraper:
 
         Args:
             page_number: The page number to fetch.
-            params: SearchParams instance containing query filters.
 
         Returns:
             A tuple of (URL, payload dict).
         """
         return (self.base, {})
 
-    def get_request_headers(
+    def parse_search_page(
         self,
-        page_number: int,
-        params: SearchParams
-    ) -> dict:
+        response: requests.Response
+    ) -> list[TorrentInfo]:
         """
-        Returns HTTP headers for the request.
+        Parses the HTTP response and extracts torrent information.
 
-        Can be overridden for site-specific needs. By default returns User-Agent
-        header, some websites return empty response without it.
+        Must be implemented by subclasses.
 
         Returns:
-            Dictionary of HTTP headers.
+            A list of TorrentInfo objects.
         """
-        return {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0'
-        }
+        raise NotImplementedError(
+            "Subclasses must implement `parse_search_page`"
+        )
+
+    def parse_detail_page(
+        self,
+        response: requests.Response,
+        torrent: TorrentInfo
+    ) -> TorrentInfo:
+        """
+        Parses the HTTP response and extracts torrent information.
+
+        Must be implemented by subclasses.
+
+        Returns:
+            A list of TorrentInfo objects.
+        """
+        raise NotImplementedError(
+            "Subclasses must implement `parse_detail_page`"
+        )
 
     def find_all(
         self,
@@ -224,43 +261,3 @@ class Scraper:
         if not el:
             logger.warning(f"{self.lp} {name} not found on page")
         return el
-
-    def parse_response(self, response: requests.Response) -> list[TorrentInfo]:
-        """
-        Parses the HTTP response and extracts torrent information.
-
-        Must be implemented by subclasses.
-
-        Returns:
-            A list of TorrentInfo objects.
-        """
-        raise NotImplementedError("Subclasses must implement `parse_response`")
-
-    def get_magnet_links(
-        self,
-        torrents: list[TorrentInfo]
-    ) -> None:
-        """
-        Iterates over a list of torrents and fetches their magnet links.
-
-        Args:
-            torrents: List of TorrentInfo instances.
-        """
-        logger.info(f"{self.lp} Fetching magnet links...")
-        length = len(torrents)
-        for idx, torrent in enumerate(torrents):
-            logger.info(f"{self.lp} Torrent {idx + 1} / {length}")
-            self.fetch_magnet_link(torrent)
-        logger.info(f"{self.lp} Done")
-
-    def fetch_magnet_link(torrent: TorrentInfo) -> None:
-        """
-        Retrieves and sets the magnet link for a given torrent.
-
-        You only need to implement this method when magnet link can not be
-        obtained from site's seach page.
-
-        Args:
-            torrent: A TorrentInfo instance to update.
-        """
-        pass
