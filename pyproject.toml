@@ -7,7 +7,7 @@ name = "scrapers"
 
 [project]
 name = "torrent-scrapers"
-version = "0.0.1"
+dynamic = ["version"]
 authors = [
   { name="Łukasz Flisak", email="lu.dev00@gmail.com" },
 ]

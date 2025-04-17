@@ -35,6 +35,7 @@ pip install torrent-scrapers
 - Python 3.10+
 - `requests`
 - `beautifulsoup4`
+- `pydantic`
 
 #### Clone repository
 
