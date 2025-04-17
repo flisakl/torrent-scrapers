@@ -3,8 +3,9 @@
 Collection of web scrapers of popular torrent sites.
 
 Currently package provides scrapers for:
-- [X] [1337x](https://1337x.to)
-- [X] [Nyaa](https://nyaa.si)
+- [1337x](https://1337x.to)
+- [Nyaa](https://nyaa.si)
+- [YTS YIFY](https://yts.mx)
 
 ---
 
