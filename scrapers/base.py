@@ -237,7 +237,7 @@ class Scraper:
         Returns:
             A list of matching PageElements.
         """
-        items = source(name, recursive=recursive, attrs=kwargs)
+        items = source(name, recursive=recursive, **kwargs)
         if not items:
             logger.warning(f"{self.lp} {name} not found on page")
         return items
@@ -257,7 +257,7 @@ class Scraper:
         Returns:
             A matching PageElement or None.
         """
-        el = source.find(name, attrs=kwargs, recursive=recursive)
+        el = source.find(name, recursive=recursive, **kwargs)
         if not el:
             logger.warning(f"{self.lp} {name} not found on page")
         return el
